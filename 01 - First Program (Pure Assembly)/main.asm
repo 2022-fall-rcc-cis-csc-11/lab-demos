@@ -4,14 +4,21 @@
 ; Data section is for our global vars in system ram
 section .data
 
+
 ;;;;;
 ; System calls
 SYS_WRITE		equ		1
+SYS_EXIT		equ		60
+
 
 ;;;;;
 ; File descriptors
 FD_STDOUT		equ		1
 
+
+;;;;;;;;;;;;
+; Exit codes
+EXIT_SUCCESS		equ		0
 
 
 ;;;;;
@@ -37,7 +44,12 @@ _start:
 	mov rdx, HELLO_MESSAGE_LEN	; Provide the number of characters print
 	syscall				; Now that we have everything setup, actually do the system call
 	
-	
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; Properly exit with a system call
+	mov rax, SYS_EXIT		; System call code for a proper exit!
+	mov rdi, EXIT_SUCCESS		; Exit code into rdi (EXIT_SUCCESS = 0)
+	syscall				; Now that everything's setup, do the syscall to exit
+
 
 
 
