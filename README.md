@@ -45,7 +45,7 @@ $ git checkout master
 
 This section contains topics that were already covered, as a reminder to myself.
 
-* TODO
+* Basic pure assembly program w/ message output
 
 ## Topics to Cover
 
