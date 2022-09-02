@@ -51,7 +51,28 @@ This section contains topics that were already covered, as a reminder to myself.
 
 This section contains some future topics that will be covered if time permits.
 
-* TBD
+* Topics required to finish Assignment 2 (Compute Area of Circle)
+
+    * C: Using a C program as our entry point
+
+    * C: Simple printing
+
+    * C: Calling on and receiving a return value from an assembly function
+
+    * Assembly: Receiving user input from the console with libP
+
+    * Assembly: Printing integers to the console with libP
+
+    * Assembly: Calling on external functions
+
+    * Assembly: Integer multiplication and division
+
+    * Assembly: Storing and retrieving global (.data) variables
+
+* Assembly: Setting up uninitialized data (.bss) variables
+
+* Assembly: Making your own functions to improve development efficiency
+
 
 ### Unfinished Demos
 
