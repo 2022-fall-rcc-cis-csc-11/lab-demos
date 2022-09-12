@@ -62,6 +62,19 @@ extern hybrid_cool
 global main
 main:
 
+	; Call on the printer.c module
+	; void hybrid_cool()
+	; The call to our main() introduced a "stack alignment" issue,
+	; 	where our stack was no longer aligned to 16-bytes,
+	;	which can cause some gcc (or libP) functions to crash.
+	; Therefore, add some fake/junk data to the stack just before
+	;	calling hybrid_cool, to realign the stack to 16-bytes.
+	; After the call, remove the junk data from the stack, so
+	;	the rest of our program doesn't crash.
+	push rax
+	call hybrid_cool
+	pop rax
+
 	; Ask the user for input
 	mov rax, SYS_WRITE		; System call code
 	mov rdi, FD_STDOUT		; Print to stdout
