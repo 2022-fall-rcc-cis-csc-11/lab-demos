@@ -82,6 +82,8 @@ main:
 	mov rdx, ASK_INPUT_MSG_LEN	; Length of the string to print
 	syscall
 
+pointlessLabel:
+
 	; Ask libP to help us input an int64
 	call libPuhfessorP_inputSignedInteger64
 	mov [MY_INT], rax
