@@ -16,8 +16,14 @@ ASK_INPUT_MSG_LEN		equ		$-ASK_INPUT_MSG
 
 ECHO_INPUT_BEFORE_MSG		db		"You entered the super cool number *****"
 ECHO_INPUT_BEFORE_MSG_LEN	equ		$-ECHO_INPUT_BEFORE_MSG
-ECHO_INPUT_AFTER_MSG		db		"*****. How cool !",13,10
+ECHO_INPUT_AFTER_MSG		db		"*****. How cool !"
 ECHO_INPUT_AFTER_MSG_LEN	equ		$-ECHO_INPUT_AFTER_MSG
+
+ECHO_INCREASED_INPUT_MSG	db		"Increased, the number is: "
+ECHO_INCREASED_INPUT_MSG_LEN	equ		$-ECHO_INCREASED_INPUT_MSG
+
+CRLF				db		13,10
+CRLF_LEN			equ		$-CRLF
 
 
 ;;;
@@ -74,9 +80,6 @@ main:
 	mov rdx, ECHO_INPUT_BEFORE_MSG_LEN	; Length of the string to print
 	syscall
 
-	; Increase the integer
-	inc qword [MY_INT]
-
 	; Utilize libP to print the integer back to the user
 	; It's using the signature: void libPuhfessorP_inputSignedInteger64(long)
 	mov rdi, [MY_INT]
@@ -88,10 +91,53 @@ main:
 	mov rsi, ECHO_INPUT_AFTER_MSG		; Pointer to first character of string to print
 	mov rdx, ECHO_INPUT_AFTER_MSG_LEN	; Length of the string to print
 	syscall
+	call crlf
+
+	; Increase the integer
+	inc qword [MY_INT]
+
+	; Echo the user's increased input back to them
+	mov rax, SYS_WRITE			; System call code
+	mov rdi, FD_STDOUT			; Print to stdout
+	mov rsi, ECHO_INCREASED_INPUT_MSG	; Pointer to first character of string to print
+	mov rdx, ECHO_INCREASED_INPUT_MSG_LEN	; Length of the string to print
+	syscall
+
+	; Ask libP to print again
+	mov rdi, [MY_INT]				; First integer argument goes into rdi
+	call libPuhfessorP_printSignedInteger64		; Do a call (will return like a func)
+	call crlf
 
 	; We're done
 	mov rax, EXIT_SUCCESS	; Mov 7 into rax (our return code)
 	ret			; Return control back to GCC libraries (aka exit our program)
+
+;;;
+; Custom function to print a CRLF
+crlf:
+
+	; Prologue
+	push r12
+	push r13
+
+	; Just to have a reason to preserve some callee-saved registers,
+	; let's mess with the values of r12 and r13
+	mov r12, 5
+	mov r13, 9
+
+	; Print the CRLF!
+	mov rax, SYS_WRITE	; System call code
+	mov rdi, FD_STDOUT	; Print to stdout
+	mov rsi, CRLF		; Pointer to first character of string to print
+	mov rdx, CRLF_LEN	; Length of the string to print
+	syscall
+
+	; Epilogue
+	pop r13
+	pop r12
+
+	ret
+
 
 
 
