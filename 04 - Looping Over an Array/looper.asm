@@ -11,9 +11,11 @@ section .data
 
 ;;;
 ; The array of .... bytes?
-THE_BYTES			db		"Hello, this is an array of bytes"
-THE_BYTES_LEN		equ		$-THE_BYTES
+THE_BYTES					db		"Hello, this is an array of bytes"
+THE_BYTES_LEN				equ		$-THE_BYTES
 
+;	Null terminated string
+NULL_TERMINATED_STRING		db		"YO, this is a null-terminated string, baby!!!",0
 
 ;;;
 ; CStrings
@@ -56,18 +58,69 @@ global looper
 looper:
 	
 	; Do the printTwoTest
-	;call printTwoTest
+	call printTwoTest
+	call crlf
+	call crlf
 	
 	; Print the whole string
 	mov rdi, THE_BYTES
 	mov rsi, THE_BYTES_LEN
 	call printNBytes
 	call crlf
+	call crlf
+	
+	; Print the null-terminated string
+	mov rdi, NULL_TERMINATED_STRING
+	call printNullTerminatedString
+	call crlf
+	call crlf
 	
 	; We're done
 	mov rax, EXIT_SUCCESS	; Mov 7 into rax (our return code)
 	ret						; Return control back to GCC libraries (aka exit our program)
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;	void printNullTerminatedString(char* p);
+;	Prints a null terminated string, pointed to by p
+;	Register usage:
+;	r12: Running pointer
+printNullTerminatedString:
+	
+	; Prologue
+	push r12
+	
+	;	Grab incoming args
+	mov r12, rdi
+	
+printNullTerminatedString_loopTop:
+	
+	;	while ( (*r12) != 0 )
+	cmp byte [r12], 0
+	je printNullTerminatedString_loopDone
+	
+	;	{
+	
+	; Print the character pointed to by r12
+	mov rax, SYS_WRITE	; System call code
+	mov rdi, FD_STDOUT	; Print to stdout
+	mov rsi, r12		; Pointer to first character of string to print
+	mov rdx, 1			; Length of the string to print
+	syscall
+	
+	; Advance the running pointer
+	inc r12
+	
+	;	}
+	
+	jmp printNullTerminatedString_loopTop
+	
+printNullTerminatedString_loopDone:	
+	
+	; Epilogue
+	pop r12
+	
+	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;	void printNBytes(char* p, long numberOfBytes);
