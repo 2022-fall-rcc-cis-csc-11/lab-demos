@@ -14,8 +14,14 @@ section .data
 THE_BYTES					db		"Hello, this is an array of bytes"
 THE_BYTES_LEN				equ		$-THE_BYTES
 
+
+;	Junk data
+JUNK_DATA					db		1,2,3,4,5,233
+
+
 ;	Null terminated string
 NULL_TERMINATED_STRING		db		"YO, this is a null-terminated string, baby!!!",0
+
 
 ;;;
 ; CStrings
@@ -71,6 +77,13 @@ looper:
 	
 	; Print the null-terminated string
 	mov rdi, NULL_TERMINATED_STRING
+	call printNullTerminatedString
+	call crlf
+	call crlf
+	
+	; OOFF, printNullTerminatedString doesn't work well with
+	; strings that aren't null-terminated
+	mov rdi, THE_BYTES
 	call printNullTerminatedString
 	call crlf
 	call crlf
