@@ -55,12 +55,67 @@ section .text
 global looper
 looper:
 	
-	call printTwoTest
+	; Do the printTwoTest
+	;call printTwoTest
+	
+	; Print the whole string
+	mov rdi, THE_BYTES
+	mov rsi, THE_BYTES_LEN
+	call printNBytes
+	call crlf
 	
 	; We're done
 	mov rax, EXIT_SUCCESS	; Mov 7 into rax (our return code)
 	ret						; Return control back to GCC libraries (aka exit our program)
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;	void printNBytes(char* p, long numberOfBytes);
+;	Prints a specified number of bytes, starting at the given pointer
+;	Register usage:
+;	r12: Running pointer
+;	r13: Number of bytes left to print
+printNBytes:
+	
+	; Prologue
+	push r12
+	push r13
+	
+	;	Grab function arguments
+	mov r12, rdi
+	mov r13, rsi
+	
+printNBytes_loopTop:	; while (r13 != 0)
+	
+	cmp r13, 0					; if ( r13 == 0 ) {
+	je printNBytes_loopDone		; 	goto printNBytes_loopDone
+								; }
+
+printNBytes_loopBody:	; {
+
+	; Print the character pointed to by r12
+	mov rax, SYS_WRITE	; System call code
+	mov rdi, FD_STDOUT	; Print to stdout
+	mov rsi, r12		; Pointer to first character of string to print
+	mov rdx, 1			; Length of the string to print
+	syscall
+
+	; Advance stuff
+	inc r12				; (r12++) Advance the running pointer
+	dec r13				; (r13--) Decrease number of characters to print remaining
+
+						; }
+	
+	; Jump back up to the top of the loop
+	jmp printNBytes_loopTop
+
+printNBytes_loopDone:
+	
+	; Epilogue
+	pop r13
+	pop r12
+	
+	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;	void printTwoTest();
