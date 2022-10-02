@@ -29,6 +29,12 @@ FILE_BYTE_DELIMITER_MSG_LEN	equ	$-FILE_BYTE_DELIMITER_MSG
 FILE_OUT_OPEN_FAIL_MSG		db	"Failed to opened the output file: "
 FILE_OUT_OPEN_FAIL_MSG_LEN	equ	$-FILE_OUT_OPEN_FAIL_MSG
 
+PROMPT_MSG					db	"Please enter up to 8K of characters: "
+PROMPT_MSG_LEN				equ	$-PROMPT_MSG
+
+ECHO_STDIN_MSG				db	"You entered: "
+ECHO_STDIN_MSG_LEN			equ	$-ECHO_STDIN_MSG
+
 CRLF				db		13,10
 CRLF_LEN			equ		$-CRLF
 
@@ -47,6 +53,7 @@ FILE_MODE_READWRITE equ		2
 
 ;;;
 ; File descriptors
+FD_STDIN			equ		0
 FD_STDOUT			equ		1
 
 
@@ -83,6 +90,9 @@ global file_io
 file_io:
 	
 	call read_write_test
+	call crlf
+	
+	call stdin_test
 	call crlf
 	
 	; We're done
@@ -250,6 +260,51 @@ read_write_test_done:
 
 	;	Epilogue
 	pop r13
+	pop r12
+	
+	ret
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;	void stdin_test()
+;	Register usage:
+;	r12: # of character inputted
+stdin_test:
+	
+	;	Prologue
+	push r12
+	
+	;	Ask user to enter some stuff
+	mov rax, SYS_WRITE			; System call code
+	mov rdi, FD_STDOUT			; Print to stdout
+	mov rsi, PROMPT_MSG			; Pointer to first character of string to print
+	mov rdx, PROMPT_MSG_LEN		; Length of the string to print
+	syscall
+	
+	; Read up to 8K of characters
+	mov rax, SYS_READ					; System call code
+	mov rdi, FD_STDIN					; Read from the file
+	mov rsi, MY_BUFFER					; Where to store read characters
+	mov rdx, 8192						; Read the characters
+	syscall
+	
+	mov r12, rax						; For simplicity, assume it was successful
+	
+	;	Tell the user they entered something ... 
+	mov rax, SYS_WRITE			; System call code
+	mov rdi, FD_STDOUT			; Print to stdout
+	mov rsi, ECHO_STDIN_MSG		; Pointer to first character of string to print
+	mov rdx, ECHO_STDIN_MSG_LEN	; Length of the string to print
+	syscall
+	
+	;	Echo the user's input back to them
+	mov rax, SYS_WRITE			; System call code
+	mov rdi, FD_STDOUT			; Print to stdout
+	mov rsi, MY_BUFFER			; Pointer to first character of string to print
+	mov rdx, r12				; Length of the string to print
+	syscall
+	
+	; Epilogue
 	pop r12
 	
 	ret
