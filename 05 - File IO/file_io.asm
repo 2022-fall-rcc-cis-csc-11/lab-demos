@@ -17,14 +17,17 @@ FILE_NAME_OUTPUT			db		"output.txt",0
 FILE_OPEN_SUCCESS_MSG		db	"Successfully opened the file: "
 FILE_OPEN_SUCCESS_MSG_LEN	equ	$-FILE_OPEN_SUCCESS_MSG
 
-FILE_OPEN_FAIL_MSG			db	"Failed to opened the file"
+FILE_OPEN_FAIL_MSG			db	"Failed to opened the input file"
 FILE_OPEN_FAIL_MSG_LEN		equ	$-FILE_OPEN_FAIL_MSG
 
-FILE_DONE_MSG				db	"Done reading the file"
+FILE_DONE_MSG				db	"Done reading the input file"
 FILE_DONE_MSG_LEN			equ	$-FILE_DONE_MSG
 
 FILE_BYTE_DELIMITER_MSG		db	" ==> "
 FILE_BYTE_DELIMITER_MSG_LEN	equ	$-FILE_BYTE_DELIMITER_MSG
+
+FILE_OUT_OPEN_FAIL_MSG		db	"Failed to opened the output file: "
+FILE_OUT_OPEN_FAIL_MSG_LEN	equ	$-FILE_OUT_OPEN_FAIL_MSG
 
 CRLF				db		13,10
 CRLF_LEN			equ		$-CRLF
@@ -38,6 +41,8 @@ SYS_READ			equ		0
 SYS_WRITE			equ		1
 ;
 FILE_MODE_READONLY	equ		0
+FILE_MODE_WRITEONLY	equ		1
+FILE_MODE_READWRITE equ		2
 
 
 ;;;
@@ -50,12 +55,15 @@ FD_STDOUT			equ		1
 EXIT_SUCCESS		equ		0
 
 
+UPPERCASE_SUBTRACTOR		equ		32
+
 
 ;;;;;;;;;;;;;
 ; BSS Section
 section .bss
 
 MY_BUFFER			resb	8192
+MY_CHAR				resb	1
 
 
 ;;;;;;;;;;;;;;
@@ -74,7 +82,7 @@ extern libPuhfessorP_printSignedInteger64
 global file_io
 file_io:
 	
-	call read_test
+	call read_write_test
 	call crlf
 	
 	; We're done
@@ -83,15 +91,17 @@ file_io:
 
 
 ;;;
-;	void read_test()
+;	void read_write_test()
 ;	Register usage:
-;	r12: File descriptor
-read_test:
+;	r12: Input file descriptor
+;	r13: Output file descriptor
+read_write_test:
 	
 	; Prologue
 	push r12
+	push r13
 	
-	;	Let's open the file!
+	;	Let's open the input file!
 	mov rax, SYS_OPEN				; System will open a file for us
 	mov rdi, FILE_NAME_INPUT		; Address of NULL terminated file name
 	mov rsi, FILE_MODE_READONLY		; File status flags (readonly)
@@ -100,10 +110,10 @@ read_test:
 	;	Did it succeed?
 	mov r12, rax
 	cmp r12, 0						; Negative file descriptor means FAIL
-	jl read_test_invalidFile		; Jump to read_test_invalidFile if the open failed
-	;jmp read_test_validFile		; Otherwise, fall through to read_test_validFile
+	jl read_write_test_invalidFile		; Jump to read_write_test_invalidFile if the open failed
+	;jmp read_write_test_validFile		; Otherwise, fall through to read_write_test_validFile
 
-read_test_validFile:
+read_write_test_validFile:
 	
 	; Say yay
 	mov rax, SYS_WRITE					; System call code
@@ -118,7 +128,47 @@ read_test_validFile:
 	call libPuhfessorP_printSignedInteger64
 	call crlf
 
-read_test_validFile_loopTop:
+read_write_test_openWrite:
+	
+	;	Let's open the output file!
+	mov rax, SYS_OPEN				; System will open a file for us
+	mov rdi, FILE_NAME_OUTPUT		; Address of NULL terminated file name
+	mov rsi, FILE_MODE_WRITEONLY	; File status flags (writeonly)
+	syscall							; Ask the system to open the file
+	
+	;	Did it succeed?
+	mov r13, rax
+	cmp r13, 0									; Negative file descriptor means FAIL
+	jl read_write_test_openWrite_invalidFile	; Jump to read_write_test_invalidFile if the open failed
+	;jmp read_write_test_openWrite_validFile	; Otherwise, fall through to read_write_test_validFile
+
+read_write_test_openWrite_validFile:
+	
+	jmp read_write_test_validFile_loopTop
+	
+read_write_test_openWrite_invalidFile:
+	
+	; Print a complaint
+	mov rax, SYS_WRITE					; System call code
+	mov rdi, FD_STDOUT					; Print to stdout
+	mov rsi, FILE_OUT_OPEN_FAIL_MSG		; Where to print from
+	mov rdx, FILE_OUT_OPEN_FAIL_MSG_LEN	; Print one character
+	syscall
+	
+	; Print the bad handle/result
+	mov rdi, r13
+	call libPuhfessorP_printSignedInteger64
+	
+	call crlf
+	
+	;	Tell the system to close the input file
+	mov rax, SYS_CLOSE					; Code to close a file
+	mov rdi, r12						; File handle is still in r12
+	syscall								; Invoke the system
+	
+	jmp read_write_test_done
+	
+read_write_test_validFile_loopTop:
 	
 	; Read one character
 	mov rax, SYS_READ					; System call code
@@ -129,7 +179,21 @@ read_test_validFile_loopTop:
 	
 	; Are we done?
 	cmp rax, 0							; SYS_READ returns # of chars read, or negative for fail
-	jle read_test_validFile_done
+	jle read_write_test_validFile_done
+	
+	;	Before writing the char to the output file
+	;	convert it to uppercase
+	;	(assumes the file only contains characters)
+	mov r11, [MY_BUFFER]
+	sub r11, UPPERCASE_SUBTRACTOR
+	mov [MY_CHAR], r11
+	
+	; Write the character into the output file
+	mov rax, SYS_WRITE					; System call code
+	mov rdi, r13						; Print to stdout
+	mov rsi, MY_CHAR					; Where to write from
+	mov rdx, 1							; Write one character
+	syscall
 	
 	; Print the character we read
 	mov rax, SYS_WRITE					; System call code
@@ -151,9 +215,9 @@ read_test_validFile_loopTop:
 	
 	call crlf
 	
-	jmp read_test_validFile_loopTop
+	jmp read_write_test_validFile_loopTop
 
-read_test_validFile_done:
+read_write_test_validFile_done:
 	
 	; Say we're done
 	mov rax, SYS_WRITE			; System call code
@@ -163,16 +227,16 @@ read_test_validFile_done:
 	syscall
 	call crlf
 
-read_test_validFile_close:
+read_write_test_validFile_close:
 
 	;	Tell the system to close the file
 	mov rax, SYS_CLOSE					; Code to close a file
 	mov rdi, r12						; File handle is still in r12
 	syscall								; Invoke the system
 
-	jmp read_test_done					; Yeah we're done
+	jmp read_write_test_done					; Yeah we're done
 
-read_test_invalidFile:
+read_write_test_invalidFile:
 
 	; Say booooo
 	mov rax, SYS_WRITE					; System call code
@@ -182,9 +246,10 @@ read_test_invalidFile:
 	syscall
 	call crlf
 
-read_test_done:
+read_write_test_done:
 
 	;	Epilogue
+	pop r13
 	pop r12
 	
 	ret
