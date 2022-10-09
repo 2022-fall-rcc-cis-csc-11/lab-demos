@@ -89,7 +89,7 @@ looper:
 	call crlf
 	
 	; We're done
-	mov rax, EXIT_SUCCESS	; Mov 7 into rax (our return code)
+	mov rax, EXIT_SUCCESS	; Mov EXIT_SUCCESS into rax (our return code)
 	ret						; Return control back to GCC libraries (aka exit our program)
 
 
