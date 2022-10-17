@@ -35,6 +35,7 @@ COMPLEX_IF_RHS3				equ		75
 
 
 CRLF				db		13,10,0
+SEPARATOR			db		"================================",0
 
 ;	Defines
 IF_BLOCK_COND_RHS	equ		100
@@ -71,12 +72,24 @@ global coolStuff
 coolStuff:
 	
 	; Prologue
-	;;;;
+	; n/a
 	
 	;	Welcome message
 	mov rdi, WELCOME_MSG
 	call printNullTerminatedString
 	call crlf
+	
+	;	Regular IF tests
+	mov rdi, 50
+	call regularIfBlock
+	call crlf
+	;
+	mov rdi, 100
+	call regularIfBlock
+	call crlf
+	
+	;
+	call separator
 	
 	;	Complex IF block: Execute the primary IF block
 	mov rdi, 24
@@ -106,17 +119,8 @@ coolStuff:
 	call complexIfBlock
 	call crlf
 	
-	;
-	;mov rdi, 50
-	;call regularIfBlock
-	;call crlf
-	;;
-	;mov rdi, 100
-	;call regularIfBlock
-	;call crlf
-	
 	; Epilogue
-	;;;
+	;	n/a
 	
 	; Return because we're done
 	ret						; Return control back to the driver module
@@ -189,6 +193,19 @@ regularIfBlock_done:				; } // end of the IF body
 ;		r12: lhs1
 ;		r13: lhs2
 ;		r14: lhs3
+;	We want to implement the following C++ equivalent:
+;	if ( lhs1 <= COMPLEX_IF_RHS1 ) {
+;		// Print a message
+;	}
+;	else if ( lhs2 < COMPLEX_IF_RHS2 ) {
+;		// Print a message
+;	}
+;	else if ( lhs3 == COMPLEX_IF_RHS3 ) {
+;		// Print a message
+;	}
+;	else {
+;		// Print a message
+;	}
 complexIfBlock:
 	
 	;	Prologue
@@ -287,9 +304,6 @@ complexIfBlock_done:
 	call printNullTerminatedString
 	call crlf
 	
-	;
-	call crlf
-	
 	;	Epilogue
 	pop r14
 	pop r13
@@ -349,7 +363,28 @@ crlf:
 
 	ret
 
+;;;
+; Custom function to print a separator
+; void separator();
+separator:
+	
+	mov rdi, SEPARATOR
+	call printNullTerminatedString
+	
+	call crlf
+	
+	mov rdi, SEPARATOR
+	call printNullTerminatedString
+	
+	call crlf
+	
+	mov rdi, SEPARATOR
+	call printNullTerminatedString
 
+	call crlf
+	call crlf
+	
+	ret
 
 
 
