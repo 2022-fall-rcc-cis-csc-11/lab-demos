@@ -82,7 +82,7 @@ caller:
 	pop r12
 	
 	; Return because we're done
-	ret						; Return control back to GCC libraries (aka exit our program)
+	ret						; Return control back to the driver module
 
 
 
