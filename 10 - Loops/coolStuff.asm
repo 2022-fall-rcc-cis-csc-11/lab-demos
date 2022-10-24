@@ -15,6 +15,7 @@ section .data
 WELCOME_MSG					db		"Welcome to the coolStuff module!",0
 
 CURRENT_COUNT_PREFIX_MSG	db		"The current count is: ",0
+THE_CHAR_X					db		"X",0
 
 
 CRLF				db		13,10,0
@@ -61,7 +62,8 @@ coolStuff:
 	call printNullTerminatedString
 	call crlf
 	
-	call forLoopTests
+	; call forLoopTests
+	call doWhileTests
 	
 	;
 	call separator
@@ -149,6 +151,82 @@ theForLoop_done:
 	pop r12
 	
 	ret
+
+
+;;;;;;;;;;;;;;;;;;;;;
+; void doWhileTests()
+doWhileTests:
+	
+	mov rdi, 10
+	call doWhileTest
+	
+	mov rdi, 5
+	call doWhileTest
+	
+	mov rdi, 1
+	call doWhileTest
+		
+	mov rdi, 0
+	call doWhileTest
+	
+	call separator
+	
+	ret
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;	void doWhileTest(long count)
+;	Register usage:
+;		r12: Incoming argument; expected count (long count)
+;		r13: Current count (long i)
+doWhileTest:
+	
+	;	Prologue
+	push r12
+	push r13
+	
+	;	Grab incoming args
+	mov r12, rdi
+
+	;	Initialize the counter (not technically part of the do-while loop)
+	mov r13, 0
+	
+doWhileTest_loopTop:			;	(falls through to the body)
+doWhileTest_loopBodyBegin:		;	{ // Begin the body part
+
+	;	Print another 'X'
+	;	(so the count corresponds to the number of X'es on a line)
+	mov rdi, THE_CHAR_X
+	call printNullTerminatedString
+	
+	;	We'll decide the body is also responsible for incrementing the counter
+	inc r13
+
+doWhileTest_loopBodyEnd:		;	} // End the body part
+doWhileTest_loopEval:			;	Start evaluating the loop's continuation expression
+	
+	cmp r13, r12				;	while (i < count);
+	jl doWhileTest_loopEval_true
+	jmp doWhileTest_loopEval_false
+	
+doWhileTest_loopEval_true:
+	
+	jmp doWhileTest_loopTop
+	
+doWhileTest_loopEval_false:
+	
+	jmp doWhileTest_loop_done
+	
+doWhileTest_loop_done:
+	
+	call crlf
+	
+	;	Epilogie
+	pop r13
+	pop r12
+	
+	ret
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
