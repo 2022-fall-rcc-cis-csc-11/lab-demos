@@ -24,6 +24,8 @@ RECEIVED_INT_VARS_ANNOUNCE_MSG		db	"Received the following integer arguments: ",
 RECEIVED_FLOAT_VARS_ANNOUNCE_MSG	db	"Received the following float arguments: ",0
 RECEIVER_END_MSG					db	"Assembly receiver - END",0
 
+ARRAY_RECEIVER_BEGIN			db	"Begin Array Receiver (asm)",0
+ARRAY_RECEIVER_END				db	"End Array Receiver (asm)",0
 
 ; Data
 MY_FLOAT_1						dq	18761.18761
@@ -37,6 +39,13 @@ RECEIVER_FLOAT_1				dq	0.0
 RECEIVER_FLOAT_2				dq	0.0
 RECEIVER_FLOAT_MULTIPLIER_1		dq	3.3
 RECEIVER_FLOAT_MULTIPLIER_2		dq	30.3
+
+ARRAY_RECEIVER_DATA_1			dq	10.1
+ARRAY_RECEIVER_DATA_2			dq	15.2
+ARRAY_RECEIVER_DATA_3			dq	20.3
+ARRAY_RECEIVER_DATA_4			dq	25.4
+ARRAY_RECEIVER_DATA_5			dq	30.5
+
 
 ; Premade function stuff
 CRLF				db		13,10,0
@@ -60,6 +69,12 @@ FD_STDOUT			equ		1
 EXIT_SUCCESS		equ		0
 
 
+;;;;;;;;;;;;;
+; BSS Section
+section .bss
+
+MY_DATA_ARRAY		resq	5
+
 ;;;;;;;;;;;;;;
 ; Text Section
 section .text
@@ -71,6 +86,7 @@ extern libPuhfessorP_printRegisters
 extern libPuhfessorP_printSignedInteger64
 extern libPuhfessorP_printFloat64
 extern c_mixed_args
+extern receiveFloatArrayFromAssembly
 
 
 ; Our entry point
@@ -261,6 +277,85 @@ receiver:
 	pop r15
 	pop r14
 	pop r13
+	pop r12
+	
+	ret
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;	void arrayReceiver(double * d)
+;	Register usage:
+;		r12: d
+global arrayReceiver
+arrayReceiver:
+
+	;	Prologue
+	push r12
+	
+	;	Stash incoming args
+	mov r12, rdi
+	
+	;	Say hello
+	mov rdi, ARRAY_RECEIVER_BEGIN
+	call printNullTerminatedString
+	call newline
+	
+	;	Modify the array data
+	movsd xmm0, [ARRAY_RECEIVER_DATA_1]
+	movsd [r12 + (0 * 8)], xmm0
+	movsd xmm0, [ARRAY_RECEIVER_DATA_2]
+	movsd [r12 + (1 * 8)], xmm0
+	movsd xmm0, [ARRAY_RECEIVER_DATA_3]
+	movsd [r12 + (2 * 8)], xmm0
+	movsd xmm0, [ARRAY_RECEIVER_DATA_4]
+	movsd [r12 + (3 * 8)], xmm0
+	movsd xmm0, [ARRAY_RECEIVER_DATA_5]
+	movsd [r12 + (4 * 8)], xmm0
+	
+	;	Say goodbye
+	mov rdi, ARRAY_RECEIVER_END
+	call printNullTerminatedString
+	call newline
+	
+	;	Epilogue
+	pop r12
+
+	ret
+
+
+;;;;;;;;;;;;
+;	void arraySender();
+;	Register usage:
+;		r12: Pointer to MY_DATA_ARRAY
+global arraySender
+arraySender:
+	
+	;	Prologue
+	push r12
+	
+	;	Call receiveFloatArrayFromAssembly with a pointer to our data
+	mov rdi, MY_DATA_ARRAY
+	call receiveFloatArrayFromAssembly
+	
+	mov r12, MY_DATA_ARRAY
+	
+	movsd xmm0, [r12 + (0 * 8)]
+	call libPuhfessorP_printFloat64
+	call newline
+	movsd xmm0, [r12 + (1 * 8)]
+	call libPuhfessorP_printFloat64
+	call newline
+	movsd xmm0, [r12 + (2 * 8)]
+	call libPuhfessorP_printFloat64
+	call newline
+	movsd xmm0, [r12 + (3 * 8)]
+	call libPuhfessorP_printFloat64
+	call newline
+	movsd xmm0, [r12 + (4 * 8)]
+	call libPuhfessorP_printFloat64
+	call newline
+	
+	;	Epilogue
 	pop r12
 	
 	ret

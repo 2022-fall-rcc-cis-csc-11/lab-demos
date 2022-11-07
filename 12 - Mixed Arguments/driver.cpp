@@ -25,6 +25,11 @@ extern "C" {
 		long a, long b, double c, double d,
 		long * e, double * f
 	);
+	
+	void arraySender();
+	void arrayReceiver(double * d);
+	
+	void receiveFloatArrayFromAssembly(double * d);
 }
 
 //
@@ -38,6 +43,11 @@ int main()
 	
 	//
 	giveStuffToAssembly();
+	
+	//
+	cout << "Call arraySender() - BEGIN" << endl;
+	arraySender();
+	cout << "Call arraySender() - END" << endl;
 	
 	//
 	cout << "Driver done" << endl;
@@ -105,12 +115,37 @@ void giveStuffToAssembly()
 	//
 	cout << "After calling the receiver: a = " << a << "; b = " << b << endl;
 	
+	//
+	double data[5];
+	arrayReceiver(data);
+	cout << "Modified array data:" << endl;
+	for ( auto d : data ) {
+		cout << d << " ";
+	}
+	cout << endl;
+	
 	cout
 		<< endl
 		<< "giveStuffToAssembly() - END" << endl
 		;
 }
 
+void receiveFloatArrayFromAssembly(double * d)
+{
+	cout << "receiveFloatArrayFromAssembly() - BEGIN" << endl;
+	
+	d[0] = 5.0;
+	d[1] = 6.1;
+	d[2] = 7.2;
+	d[3] = 8.3;
+	d[4] = 9.4;
+	
+	//for ( size_t i = 0; i < 5; i++ ) {
+	//	cout << d[i] << " ";
+	//}
+	
+	cout << "receiveFloatArrayFromAssembly() - END" << endl;
+}
 
 
 
